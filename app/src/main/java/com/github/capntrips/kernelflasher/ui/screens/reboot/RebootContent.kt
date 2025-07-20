@@ -30,16 +30,6 @@ fun ColumnScope.RebootContent(
     ) {
         Text(stringResource(R.string.reboot))
     }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && context.getSystemService(PowerManager::class.java)?.isRebootingUserspaceSupported == true) {
-        OutlinedButton(
-            modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(4.dp),
-            onClick = { viewModel.rebootUserspace() }
-        ) {
-            Text(stringResource(R.string.reboot_userspace))
-        }
-    }
     OutlinedButton(
         modifier = Modifier
             .fillMaxWidth(),

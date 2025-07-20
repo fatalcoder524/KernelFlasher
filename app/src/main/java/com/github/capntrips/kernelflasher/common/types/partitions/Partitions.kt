@@ -30,7 +30,7 @@ data class Partitions(
         }.partitions
     }
 
-    fun get(partition: String): String? {
+    operator fun get(partition: String): String? {
         return when (partition) {
             "boot" -> boot
             "dtbo" -> dtbo

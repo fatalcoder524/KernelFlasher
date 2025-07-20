@@ -13,6 +13,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import com.github.capntrips.kernelflasher.SharedViewModels
 import com.github.capntrips.kernelflasher.common.PartitionUtil
 import com.github.capntrips.kernelflasher.common.extensions.ExtendedFile.outputStream
 import com.github.capntrips.kernelflasher.common.extensions.ExtendedFile.readText
@@ -25,6 +26,7 @@ import kotlin.DeprecationLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileInputStream
@@ -49,7 +51,7 @@ class BackupsViewModel(
             if (value != field) {
                 if (_backups[value]?.hashes != null) {
                     PartitionUtil.AvailablePartitions.forEach { partitionName ->
-                        if (_backups[value]!!.hashes!!.get(partitionName) != null) {
+                        if (_backups[value]!!.hashes!![partitionName] != null) {
                             _backupPartitions[partitionName] = true
                         }
                     }
@@ -236,6 +238,7 @@ class BackupsViewModel(
         }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     @SuppressLint("SdCardPath")
     @Deprecated("Backup migration will be removed in the first stable release")
     fun migrate(context: Context) {
@@ -290,6 +293,7 @@ class BackupsViewModel(
                 }
                 oldBackupsDir.delete()
             }
+            SharedViewModels.mainViewModel.markRefreshNeeded()
             refresh(context)
         }
     }

@@ -67,4 +67,6 @@
     <string name="ramdisk_fmt">Ramdisk формат</string>
     <string name="susfs_version">SUSFS Версия</string>
     <string name="backup_now">Резервное копирование выбранных разделов</string>
+    <string name="vendor_boot_fmt">vendor_boot.img формат</string>
+    <string name="active">Активный</string>
 </resources>

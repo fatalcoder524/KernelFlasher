@@ -68,4 +68,6 @@
     <string name="ramdisk_fmt">Format Ramdisk</string>
     <string name="susfs_version">Wersja SUSFS</string>
     <string name="backup_now">Utwórz kopię zapasową wybranych partycji</string>
+    <string name="vendor_boot_fmt">Format vendor_boot.img</string>
+    <string name="active">Aktywny</string>
 </resources>

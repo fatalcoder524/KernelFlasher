@@ -67,5 +67,7 @@
     <string name="ramdisk_fmt">Ramdisk Format</string>
     <string name="susfs_version">SUSFS Version</string>
     <string name="backup_now">Backup Selected Partitions</string>
+    <string name="vendor_boot_fmt">vendor_boot.img Format</string>
+    <string name="active">Active</string>
     <!-- TODO: Make error and success messages string resources -->
 </resources>

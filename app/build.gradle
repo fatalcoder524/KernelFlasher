@@ -33,7 +33,10 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
+            zipAlignEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     sourceSets {
@@ -42,6 +45,7 @@ android {
         }
     }
     buildFeatures {
+        compose true
         aidl true
     }
     compileOptions {
@@ -50,9 +54,8 @@ android {
     }
     kotlinOptions {
         jvmTarget = '17'
-    }
-    buildFeatures {
-        compose true
+        freeCompilerArgs += "-Xno-param-assertions"
+        freeCompilerArgs += "-Xno-call-assertions"
     }
     composeOptions {
         kotlinCompilerExtensionVersion libs.versions.compose.compiler.get()
@@ -64,6 +67,12 @@ android {
         jniLibs {
             useLegacyPackaging true
         }
+        dex {
+            useLegacyPackaging true
+        }
+    }
+    androidResources {
+        generateLocaleConfig = true
     }
     namespace 'com.github.capntrips.kernelflasher'
 }

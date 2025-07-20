@@ -67,4 +67,6 @@
     <string name="ramdisk_fmt">Formato do Ramdisk</string>
     <string name="susfs_version">SUSFS Versão</string>
     <string name="backup_now">Fazer backup das partições selecionadas</string>
+    <string name="vendor_boot_fmt">Formato do vendor_boot.img</string>
+    <string name="active">Ativo</string>
 </resources>

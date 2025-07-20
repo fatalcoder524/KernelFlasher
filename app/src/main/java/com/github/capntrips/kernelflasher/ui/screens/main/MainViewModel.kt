@@ -2,6 +2,7 @@ package com.github.capntrips.kernelflasher.ui.screens.main
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
@@ -39,6 +40,7 @@ class MainViewModel(
     val slotSuffix: String
 
     val kernelVersion: String
+    val halInfo: String
     val susfsVersion: String
     val isAb: Boolean
     val slotA: SlotViewModel
@@ -49,15 +51,26 @@ class MainViewModel(
     val hasRamoops: Boolean
 
     private val _isRefreshing: MutableState<Boolean> = mutableStateOf(true)
+    private val _isRefreshRequired = mutableStateOf(true)
     private var _error: String? = null
     private var _backups: MutableMap<String, Backup> = mutableMapOf()
+    var showSlotIntentDialog: MutableState<Boolean> = mutableStateOf(false)
+
+    var pendingFlashUri: Uri? = null
+    var slotSuffixForFlash = mutableStateOf<String?>(null)
 
     val isRefreshing: Boolean
         get() = _isRefreshing.value
+    val isRefreshRequired: Boolean
+        get() = _isRefreshRequired.value
     val hasError: Boolean
         get() = _error != null
     val error: String
         get() = _error!!
+
+    fun markRefreshNeeded() {
+        _isRefreshRequired.value = true
+    }
 
     data class UpdateDialogData(
         val title: String,
@@ -78,6 +91,10 @@ class MainViewModel(
 
     init {
         PartitionUtil.init(context, fileSystemManager)
+        val bootctl = File(context.filesDir, "bootctl")
+        halInfo = runCatching { Shell.cmd("$bootctl hal-info").exec().out[0].substringAfter("HAL Version: ").trim() }
+            .recoverCatching { "" }
+            .getOrDefault("")
         kernelVersion = Shell.cmd("echo $(uname -r) $(uname -v)").exec().out[0]
         susfsVersion = runCatching { Shell.cmd("susfsd version").exec().out[0] }
             .recoverCatching { Shell.cmd("ksu_susfs show version").exec().out[0] }
@@ -107,15 +124,20 @@ class MainViewModel(
 
         hasRamoops = fileSystemManager.getFile("/sys/fs/pstore/console-ramoops-0").exists()
         _isRefreshing.value = false
+        _isRefreshRequired.value = false
     }
 
     fun refresh(context: Context) {
+        if (!isRefreshRequired) return
+
         launch {
             slotA.refresh(context)
             if (isAb) {
                 slotB!!.refresh(context)
             }
             backups.refresh(context)
+
+            _isRefreshRequired.value = false
         }
     }
 

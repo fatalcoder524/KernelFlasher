@@ -37,21 +37,26 @@ fun ColumnScope.BackupsContent(
     navController: NavController
 ) {
     val context = LocalContext.current
+
+    val monoStyle = MaterialTheme.typography.titleSmall.copy(
+        fontFamily = FontFamily.Monospace,
+        fontWeight = FontWeight.Medium
+    )
+
     if (viewModel.currentBackup != null && viewModel.backups.containsKey(viewModel.currentBackup)) {
         DataCard (viewModel.currentBackup!!) {
             val cardWidth = remember { mutableIntStateOf(0) }
-            val currentBackup = viewModel.backups.getValue(viewModel.currentBackup!!)
+            val backupId = viewModel.currentBackup!!
+            val currentBackup = viewModel.backups[backupId]
+            if(currentBackup == null) return@DataCard
             DataRow(stringResource(R.string.backup_type), currentBackup.type, mutableMaxWidth = cardWidth)
             DataRow(stringResource(R.string.kernel_version), currentBackup.kernelVersion, mutableMaxWidth = cardWidth, clickable = true)
             if (currentBackup.type == "raw") {
-                if (!currentBackup.bootSha1.isNullOrEmpty()) {
+                currentBackup.bootSha1?.takeIf { it.length >= 8 }?.let { sha1 ->
                     DataRow(
                         label = stringResource(R.string.boot_sha1),
-                        value = currentBackup.bootSha1.substring(0, 8),
-                        valueStyle = MaterialTheme.typography.titleSmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Medium
-                        ),
+                        value = sha1.substring(0, 8),
+                        valueStyle = monoStyle,
                         mutableMaxWidth = cardWidth
                     )
                 }
@@ -59,15 +64,12 @@ fun ColumnScope.BackupsContent(
                     val hashWidth = remember { mutableIntStateOf(0) }
                     DataSet(stringResource(R.string.hashes)) {
                         for (partitionName in PartitionUtil.PartitionNames) {
-                            val hash = currentBackup.hashes.get(partitionName)
+                            val hash = currentBackup.hashes[partitionName]
                             if (hash != null) {
                                 DataRow(
                                     label = partitionName,
                                     value = hash.takeIf { it.isNotEmpty() }?.substring(0, 8) ?: "Hash not found!",
-                                    valueStyle = MaterialTheme.typography.titleSmall.copy(
-                                        fontFamily = FontFamily.Monospace,
-                                        fontWeight = FontWeight.Medium
-                                    ),
+                                    valueStyle = monoStyle,
                                     mutableMaxWidth = hashWidth
                                 )
                             }
@@ -121,16 +123,15 @@ fun ColumnScope.BackupsContent(
                     }
                 ) {
                     val cardWidth = remember { mutableIntStateOf(0) }
-                    if (currentBackup.type == "raw" && !currentBackup.bootSha1.isNullOrEmpty()) {
-                        DataRow(
-                            label = stringResource(R.string.boot_sha1),
-                            value = currentBackup.bootSha1.substring(0, 8),
-                            valueStyle = MaterialTheme.typography.titleSmall.copy(
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            mutableMaxWidth = cardWidth
-                        )
+                    if (currentBackup.type == "raw") {
+                        currentBackup.bootSha1?.takeIf { it.length >= 8 }?.let { sha1 ->
+                            DataRow(
+                                label = stringResource(R.string.boot_sha1),
+                                value = sha1.substring(0, 8),
+                                valueStyle = monoStyle,
+                                mutableMaxWidth = cardWidth
+                            )
+                        }
                     }
                     DataRow(stringResource(R.string.kernel_version), currentBackup.kernelVersion, mutableMaxWidth = cardWidth, clickable = true)
                 }

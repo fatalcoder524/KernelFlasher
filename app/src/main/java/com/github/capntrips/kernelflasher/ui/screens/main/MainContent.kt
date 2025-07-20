@@ -37,13 +37,14 @@ fun ColumnScope.MainContent(
         DataRow(stringResource(R.string.model), "${Build.MODEL} (${Build.DEVICE})", mutableMaxWidth = cardWidth)
         DataRow(stringResource(R.string.build_number), Build.ID, mutableMaxWidth = cardWidth)
         DataRow(stringResource(R.string.kernel_version), viewModel.kernelVersion, mutableMaxWidth = cardWidth, clickable = true)
-        if (viewModel.isAb) {
+        if (viewModel.isAb)
             DataRow(stringResource(R.string.slot_suffix), viewModel.slotSuffix, mutableMaxWidth = cardWidth)
-        }
+
         if(viewModel.susfsVersion != "v0.0.0" && viewModel.susfsVersion != "Invalid")
-        {
             DataRow(stringResource(R.string.susfs_version), viewModel.susfsVersion, mutableMaxWidth = cardWidth)
-        }
+
+        if(viewModel.halInfo != "")
+            DataRow("Boot HAL version", viewModel.halInfo, mutableMaxWidth = cardWidth)
     }
     Spacer(Modifier.height(16.dp))
     SlotCard(

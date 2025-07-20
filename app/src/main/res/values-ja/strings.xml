@@ -68,5 +68,7 @@
   <string name="ramdisk_fmt">Ramdisk形式</string>
   <string name="susfs_version">SUSFSバージョン</string>
     <string name="backup_now">選択したパーティションをバックアップする</string>
+    <string name="vendor_boot_fmt">vendor_boot.img形式</string>
+    <string name="active">アクティブ</string>
     <!-- TODO: Make error and success messages string resources -->
 </resources>

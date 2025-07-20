@@ -2,15 +2,20 @@ package com.github.capntrips.kernelflasher
 
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.provider.DocumentsContract
 import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
+import android.view.Window
 import android.view.animation.AccelerateInterpolator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -68,6 +73,11 @@ import com.topjohnwu.superuser.nio.FileSystemManager
 import kotlinx.serialization.ExperimentalSerializationApi
 import java.io.File
 import kotlin.system.exitProcess
+
+object SharedViewModels {
+    @OptIn(ExperimentalSerializationApi::class)
+    lateinit var mainViewModel: MainViewModel
+}
 
 @ExperimentalAnimationApi
 @ExperimentalMaterialApi
@@ -130,11 +140,16 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        requestWindowFeature(Window.FEATURE_NO_TITLE) // Hide the title bar
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        val isZipIntent = intent?.action == Intent.ACTION_VIEW &&
+                (intent.type == "application/zip" || intent.data?.toString()?.endsWith(".zip") == true)
 
         splashScreen.setOnExitAnimationListener { splashScreenView ->
+            val duration = if (isZipIntent) 100L else 250L
             val scale = ObjectAnimator.ofPropertyValuesHolder(
                 splashScreenView.view,
                 PropertyValuesHolder.ofFloat(
@@ -149,7 +164,7 @@ class MainActivity : ComponentActivity() {
                 )
             )
             scale.interpolator = AccelerateInterpolator()
-            scale.duration = 250L
+            scale.duration = duration
             scale.doOnEnd { splashScreenView.remove() }
             scale.start()
         }
@@ -168,6 +183,8 @@ class MainActivity : ComponentActivity() {
             }
         )
 
+
+
         Shell.getShell()
         if (Shell.isAppGrantedRoot()!!) {
             val intent = Intent(this, FilesystemService::class.java)
@@ -181,12 +198,61 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("WrongConstant")
+    private fun handleZipIntent(intent: Intent?) {
+        val action = intent?.action ?: return
+        val uri = when (action) {
+            Intent.ACTION_VIEW -> intent.data
+            Intent.ACTION_SEND -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+            }
+            else -> null
+        } ?: return
+
+        if (intent.action == Intent.ACTION_VIEW || intent.action == Intent.ACTION_SEND) {
+            if(uri.scheme == "content" && DocumentsContract.isDocumentUri(this, uri)) {
+                val takeFlags =
+                    intent.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                try {
+                    contentResolver.takePersistableUriPermission(uri, takeFlags)
+                } catch (se: SecurityException) {
+                    Log.e(MainViewModel.Companion.TAG, se.message, se)
+                }
+            }
+
+            viewModel?.pendingFlashUri = uri
+            if(viewModel?.isAb == true)
+                viewModel?.showSlotIntentDialog?.value = true
+            else {
+                viewModel?.slotSuffixForFlash?.value = null
+                viewModel?.slotSuffixForFlash?.value = viewModel?.slotSuffix
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (Shell.isAppGrantedRoot() == true) {
+            handleZipIntent(intent)
+            if (intent.action == Intent.ACTION_VIEW || intent.action == Intent.ACTION_SEND) {
+                intent.replaceExtras(Bundle()) // Clear any existing data
+                setIntent(Intent())            // Replace with empty intent
+            }
+        }
+    }
+
     fun onAidlConnected(fileSystemManager: FileSystemManager) {
         try {
             Shell.cmd("cd $filesDir").exec()
             copyNativeBinary("lptools_static") // v20220825
             copyNativeBinary("httools_static") // v3.2.0
             copyNativeBinary("magiskboot") // v29.0
+            copyNativeBinary("bootctl") // aosp_arm64-img-13613025 android14
+            copyNativeBinary("busybox") // BusyBox v1.36.1.1
             copyAsset("mkbootfs")
             copyAsset("ksuinit")
             copyAsset("flash_ak3.sh")
@@ -206,6 +272,15 @@ class MainActivity : ComponentActivity() {
                 MainViewModel(application, fileSystemManager, navController)
             }
             val mainViewModel = viewModel!!
+            SharedViewModels.mainViewModel = mainViewModel
+
+            val slotSuffix by viewModel!!.slotSuffixForFlash
+
+            handleZipIntent(intent)
+            if (intent.action == Intent.ACTION_VIEW || intent.action == Intent.ACTION_SEND) {
+                intent.replaceExtras(Bundle()) // Clear any existing data
+                setIntent(Intent())            // Replace with empty intent
+            }
 
             val context = LocalContext.current
             val dialogData = viewModel!!.updateDialogData
@@ -216,6 +291,35 @@ class MainActivity : ComponentActivity() {
                         BuildConfig.VERSION_NAME
                     ) { title, lines, confirm ->
                         viewModel!!.showUpdateDialog(title, lines, confirm)
+                    }
+                }
+
+                val uri = viewModel?.pendingFlashUri
+
+                if (uri != null) {
+                    if (viewModel?.isAb == true && slotSuffix == null) {
+                        viewModel?.pendingFlashUri = uri
+                        viewModel?.showSlotIntentDialog?.value = true
+                    } else {
+                        // Already have slot or not AB - flash directly
+                        if (viewModel?.isAb == true && slotSuffix == "_b")
+                        {
+                            viewModel?.slotB?.flashActionType = "flashAk3"
+                            viewModel?.slotB?.flashActionURI = uri
+                            viewModel?.slotB?.showConfirmDialog()
+                        }
+                        else
+                        {
+                            viewModel?.slotA?.flashActionType = "flashAk3"
+                            viewModel?.slotA?.flashActionURI = uri
+                            viewModel?.slotA?.showConfirmDialog()
+                        }
+                        navController.navigate("slot${slotSuffix}")
+                        navController.navigate("slot${slotSuffix}/flash") {
+                            popUpTo("slot${slotSuffix}")
+                        }
+                        viewModel?.pendingFlashUri = null
+                        viewModel?.slotSuffixForFlash?.value = null
                     }
                 }
             }
@@ -240,7 +344,7 @@ class MainActivity : ComponentActivity() {
                     val slotContentA: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit = { backStackEntry ->
                         val slotSuffix = "_a"
                         val slotViewModel = slotViewModelA
-                        if (slotViewModel!!.wasFlashSuccess.value != null && listOf("slot{slotSuffix}", "slot").any { navController.currentDestination!!.route.equals(it) }) {
+                        if (slotViewModel.wasFlashSuccess.value != null && listOf("slot{slotSuffix}", "slot").any { navController.currentDestination!!.route.equals(it) }) {
                             slotViewModel.clearFlash(this@MainActivity)
                         }
                         RefreshableScreen(mainViewModel, navController, swipeEnabled = true) {
@@ -262,7 +366,7 @@ class MainActivity : ComponentActivity() {
                     val slotContent: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit = { backStackEntry ->
                         val slotSuffix = ""
                         val slotViewModel = slotViewModelA
-                        if (slotViewModel!!.wasFlashSuccess.value != null && listOf("slot{slotSuffix}", "slot").any { navController.currentDestination!!.route.equals(it) }) {
+                        if (slotViewModel.wasFlashSuccess.value != null && listOf("slot{slotSuffix}", "slot").any { navController.currentDestination!!.route.equals(it) }) {
                             slotViewModel.clearFlash(this@MainActivity)
                         }
                         RefreshableScreen(mainViewModel, navController, swipeEnabled = true) {
@@ -274,7 +378,7 @@ class MainActivity : ComponentActivity() {
                         val slotSuffix = "_a"
                         val slotViewModel = slotViewModelA
                         RefreshableScreen(mainViewModel, navController) {
-                            SlotFlashContent(slotViewModel!!, slotSuffix, navController)
+                            SlotFlashContent(slotViewModel, slotSuffix, navController)
                         }
                     }
                     val slotFlashContentB: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit = { backStackEntry ->
@@ -288,7 +392,7 @@ class MainActivity : ComponentActivity() {
                         val slotSuffix = ""
                         val slotViewModel = slotViewModelA
                         RefreshableScreen(mainViewModel, navController) {
-                            SlotFlashContent(slotViewModel!!, slotSuffix, navController)
+                            SlotFlashContent(slotViewModel, slotSuffix, navController)
                         }
                     }
                     val slotBackupsContentA: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit = { backStackEntry ->
@@ -300,7 +404,7 @@ class MainActivity : ComponentActivity() {
                             backupsViewModel.clearCurrent()
                         }
                         RefreshableScreen(mainViewModel, navController) {
-                            SlotBackupsContent(slotViewModel!!, backupsViewModel, slotSuffix, navController)
+                            SlotBackupsContent(slotViewModel, backupsViewModel, slotSuffix, navController)
                         }
                     }
                     val slotBackupsContentB: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit = { backStackEntry ->
@@ -324,7 +428,7 @@ class MainActivity : ComponentActivity() {
                             backupsViewModel.clearCurrent()
                         }
                         RefreshableScreen(mainViewModel, navController) {
-                            SlotBackupsContent(slotViewModel!!, backupsViewModel, slotSuffix, navController)
+                            SlotBackupsContent(slotViewModel, backupsViewModel, slotSuffix, navController)
                         }
                     }
                     val slotBackupFlashContentA: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit = { backStackEntry ->
@@ -333,7 +437,7 @@ class MainActivity : ComponentActivity() {
                         backupsViewModel.currentBackup = backStackEntry.arguments?.getString("backupId")
                         if (backupsViewModel.backups.containsKey(backupsViewModel.currentBackup)) {
                             RefreshableScreen(mainViewModel, navController) {
-                                SlotFlashContent(slotViewModel!!, slotSuffix, navController)
+                                SlotFlashContent(slotViewModel, slotSuffix, navController)
                             }
                         }
 
@@ -355,7 +459,7 @@ class MainActivity : ComponentActivity() {
                         backupsViewModel.currentBackup = backStackEntry.arguments?.getString("backupId")
                         if (backupsViewModel.backups.containsKey(backupsViewModel.currentBackup)) {
                             RefreshableScreen(mainViewModel, navController) {
-                                SlotFlashContent(slotViewModel!!, slotSuffix, navController)
+                                SlotFlashContent(slotViewModel, slotSuffix, navController)
                             }
                         }
 
@@ -471,14 +575,14 @@ class MainActivity : ComponentActivity() {
                         onDismissRequest = { viewModel!!.hideUpdateDialog() },
                         title = {
                             Text(
-                                dialogData!!.title,
+                                dialogData.title,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
                         },
                         text = {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                dialogData!!.changelog.forEach {
+                                dialogData.changelog.forEach {
                                     Text(it, fontWeight = FontWeight.Bold)
                                 }
                             }
@@ -486,7 +590,7 @@ class MainActivity : ComponentActivity() {
                         confirmButton = {
                             DialogButton("Update APK") {
                                 viewModel!!.hideUpdateDialog()
-                                dialogData!!.onConfirm()
+                                dialogData.onConfirm()
                             }
                         },
                         dismissButton = {
@@ -519,6 +623,57 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     )
+                }
+
+                if (viewModel?.showSlotIntentDialog?.value == true) {
+                    AlertDialog(
+                        onDismissRequest = { viewModel?.showSlotIntentDialog?.value = false },
+                        title = { Text("Select Slot to Flash") },
+                        text = { Text("Choose the slot where the zip should be flashed.") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                viewModel?.slotSuffixForFlash?.value = null
+                                viewModel?.slotSuffixForFlash?.value = if(viewModel?.slotSuffix == "_a") "_b" else "_a"
+                                viewModel?.showSlotIntentDialog?.value = false
+                            }) {
+                                Text("Inactive Slot")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                viewModel?.slotSuffixForFlash?.value = null
+                                viewModel?.slotSuffixForFlash?.value = viewModel?.slotSuffix
+                                viewModel?.showSlotIntentDialog?.value = false
+                            }) {
+                                Text("Active Slot")
+                            }
+                        }
+                    )
+                }
+
+                LaunchedEffect(slotSuffix) {
+                    val uri = viewModel!!.pendingFlashUri
+
+                    if (uri != null && slotSuffix != null) {
+                        if (viewModel?.isAb == true && slotSuffix == "_b")
+                        {
+                            viewModel?.slotB?.flashActionType = "flashAk3"
+                            viewModel?.slotB?.flashActionURI = uri
+                            viewModel?.slotB?.showConfirmDialog()
+                        }
+                        else
+                        {
+                            viewModel?.slotA?.flashActionType = "flashAk3"
+                            viewModel?.slotA?.flashActionURI = uri
+                            viewModel?.slotA?.showConfirmDialog()
+                        }
+                        navController.navigate("slot${slotSuffix}")
+                        navController.navigate("slot${slotSuffix}/flash") {
+                            popUpTo("slot${slotSuffix}")
+                        }
+                        viewModel!!.pendingFlashUri = null
+                        viewModel!!.slotSuffixForFlash.value = null
+                    }
                 }
             }
         }

@@ -57,10 +57,6 @@ class RebootViewModel(
         reboot()
     }
 
-    fun rebootUserspace() {
-        reboot("userspace")
-    }
-
     fun rebootRecovery() {
         reboot("recovery")
     }

@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -24,7 +25,7 @@ fun SlotCard(
     showDlkm: Boolean = true,
 ) {
     DataCard (
-        title = title,
+        title = "$title ${if(viewModel.isActive && viewModel.slotSuffix !="") "[${stringResource(R.string.active)}]" else ""}",
         button = {
             if (!isSlotScreen) {
                 AnimatedVisibility(!viewModel.isRefreshing.value) {
@@ -47,10 +48,10 @@ fun SlotCard(
                 mutableMaxWidth = cardWidth
             )
         }
-        AnimatedVisibility(!viewModel.isRefreshing.value && viewModel.bootInfo.kernelVersion != null) {
+        AnimatedVisibility(!viewModel.isRefreshing.value && viewModel.slotInfo.bootImgInfo.kernelVersion != null) {
             DataRow(
                 label = stringResource(R.string.kernel_version),
-                value = if (viewModel.bootInfo.kernelVersion != null) viewModel.bootInfo.kernelVersion!! else "",
+                value = viewModel.slotInfo.bootImgInfo.kernelVersion ?: "",
                 mutableMaxWidth = cardWidth,
                 clickable = true
             )
@@ -68,14 +69,31 @@ fun SlotCard(
         }
         DataRow(
             label = stringResource(R.string.boot_fmt),
-            value = viewModel.bootInfo.bootFmt ?: stringResource(R.string.not_found),
+            value = viewModel.slotInfo.bootImgInfo.bootFmt ?: stringResource(R.string.not_found),
             mutableMaxWidth = cardWidth
         )
         DataRow(
-            label = if (viewModel.bootInfo.ramdiskLocation == "init_boot.img") stringResource(R.string.init_boot_fmt) else stringResource(R.string.ramdisk_fmt),
-            value = viewModel.bootInfo.initBootFmt ?: stringResource(R.string.not_found),
+            label = if (viewModel.slotInfo.ramdiskInfo.ramdiskLocation == "init_boot.img") stringResource(R.string.init_boot_fmt)
+                    else if (viewModel.slotInfo.ramdiskInfo.ramdiskLocation == "vendor_boot.img") stringResource(R.string.vendor_boot_fmt)
+                    else stringResource(R.string.ramdisk_fmt),
+            value = viewModel.slotInfo.ramdiskInfo.ramdiskFmt ?: stringResource(R.string.not_found),
             mutableMaxWidth = cardWidth
         )
+        if(isSlotScreen && viewModel.slotSuffix != "")
+        {
+            DataRow(
+                label = "Unbootable",
+                value = viewModel.slotInfo.bootSlotInfo.unbootable ?: stringResource(R.string.not_found),
+                mutableMaxWidth = cardWidth,
+                valueColor = if (viewModel.slotInfo.bootSlotInfo.unbootable == "Yes") Color.Red else Color.Unspecified
+            )
+            DataRow(
+                label = "Successful",
+                value = viewModel.slotInfo.bootSlotInfo.successful ?: stringResource(R.string.not_found),
+                mutableMaxWidth = cardWidth,
+                valueColor = if (viewModel.slotInfo.bootSlotInfo.successful == "No") Color.Red else Color.Unspecified
+            )
+        }
         if (!viewModel.isRefreshing.value && viewModel.hasError) {
             Row {
                 DataValue(

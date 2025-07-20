@@ -51,7 +51,14 @@ fun ColumnScope.SlotBackupsContent(
     navController: NavController
 ) {
     val context = LocalContext.current
-    if (!navController.currentDestination!!.route!!.contains("/backups/{backupId}/restore")) {
+
+    val monoStyle = MaterialTheme.typography.titleSmall.copy(
+        fontFamily = FontFamily.Monospace,
+        fontWeight = FontWeight.Medium
+    )
+    val currentRoute = navController.currentDestination?.route.orEmpty()
+
+    if (!currentRoute.contains("/backups/{backupId}/restore")) {
         SlotCard(
             title = stringResource(if (slotSuffix == "_a") R.string.slot_a else if (slotSuffix == "_b") R.string.slot_b else R.string.slot),
             viewModel = slotViewModel,
@@ -67,15 +74,11 @@ fun ColumnScope.SlotBackupsContent(
                 DataRow(stringResource(R.string.backup_type), currentBackup.type, mutableMaxWidth = cardWidth)
                 DataRow(stringResource(R.string.kernel_version), currentBackup.kernelVersion, mutableMaxWidth = cardWidth, clickable = true)
                 if (currentBackup.type == "raw") {
-                    if(!currentBackup.bootSha1.isNullOrEmpty())
-                    {
+                    currentBackup.bootSha1?.takeIf { it.length >= 8 }?.let { sha1 ->
                         DataRow(
                             label = stringResource(R.string.boot_sha1),
-                            value = currentBackup.bootSha1.substring(0, 8),
-                            valueStyle = MaterialTheme.typography.titleSmall.copy(
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Medium
-                            ),
+                            value = sha1.substring(0, 8),
+                            valueStyle = monoStyle,
                             mutableMaxWidth = cardWidth
                         )
                     }
@@ -83,15 +86,12 @@ fun ColumnScope.SlotBackupsContent(
                         val hashWidth = remember { mutableIntStateOf(0) }
                         DataSet(stringResource(R.string.hashes)) {
                             for (partitionName in PartitionUtil.PartitionNames) {
-                                val hash = currentBackup.hashes.get(partitionName)
+                                val hash = currentBackup.hashes[partitionName]
                                 if (hash != null) {
                                     DataRow(
                                         label = partitionName,
-                                        value = hash.takeIf { it.isNotEmpty() }?.substring(0, 8) ?: "Hash not found!",
-                                        valueStyle = MaterialTheme.typography.titleSmall.copy(
-                                            fontFamily = FontFamily.Monospace,
-                                            fontWeight = FontWeight.Medium
-                                        ),
+                                        value = hash.takeIf { it.isNotEmpty() && it.length >= 8 }?.substring(0, 8) ?: "Hash not found!",
+                                        valueStyle = monoStyle,
                                         mutableMaxWidth = hashWidth
                                     )
                                 }
@@ -193,7 +193,7 @@ fun ColumnScope.SlotBackupsContent(
         val currentBackup = backupsViewModel.backups.getValue(backupsViewModel.currentBackup!!)
         if (currentBackup.hashes != null) {
             for (partitionName in PartitionUtil.PartitionNames) {
-                val hash = currentBackup.hashes.get(partitionName)
+                val hash = currentBackup.hashes[partitionName]
                 if (hash != null) {
                     OutlinedButton(
                         modifier = Modifier
@@ -235,7 +235,9 @@ fun ColumnScope.SlotBackupsContent(
                     popUpTo("slot$slotSuffix")
                 }
             },
-            enabled = currentBackup.hashes == null || (PartitionUtil.PartitionNames.none { currentBackup.hashes.get(it) != null && backupsViewModel.backupPartitions[it] == null } && backupsViewModel.backupPartitions.filter { it.value }.isNotEmpty())
+            enabled = currentBackup.hashes == null || (PartitionUtil.PartitionNames.none {
+                currentBackup.hashes[it] != null && backupsViewModel.backupPartitions[it] == null
+            } && backupsViewModel.backupPartitions.filter { it.value }.isNotEmpty())
         ) {
             Text(stringResource(R.string.restore))
         }

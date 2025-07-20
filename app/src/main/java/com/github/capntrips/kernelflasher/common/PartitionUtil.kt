@@ -101,7 +101,7 @@ object PartitionUtil {
             throw Error("Partition ${blockDevice.name} is smaller than image")
         }
         if (partitionSize > imageSize) {
-            Shell.cmd("dd bs=4096 if=/dev/zero of=$blockDevice").exec()
+            Shell.cmd("dd bs=4096 if=/dev/zero of=$blockDevice && sync").exec()
         }
         val messageDigest = MessageDigest.getInstance(hashAlgorithm)
         image.newInputStream().use { inputStream ->
