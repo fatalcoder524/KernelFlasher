@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.1.21"
+kotlin = "2.2.0"
 compose-compiler = "1.5.6"
 
 androidx-activity-compose = "1.10.1"
