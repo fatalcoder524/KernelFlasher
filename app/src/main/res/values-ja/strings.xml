@@ -27,12 +27,12 @@
   <string name="backup">バックアップ</string>
   <string name="updates">更新</string>
   <string name="flash">フラッシュ</string>
-  <string name="flash_mkbootfs">mkbootfsを使用してフラッシュする</string>
+  <string name="flash_mkbootfs">mkbootfs を使用してフラッシュ</string>
   <string name="flash_ak3_zip">AK3 Zip をフラッシュ</string>
-  <string name="flash_ak3_zip_mkbootfs">mkbootfs を使って AK3 Zip をフラッシュする</string>
+  <string name="flash_ak3_zip_mkbootfs">mkbootfs を使用して AK3 Zip をフラッシュ</string>
   <string name="flash_partition_image">パーティションイメージをフラッシュ</string>
-    <string name="flash_ksu_lkm">" KernelSU LKM Driver"</string>
-    <string name="restore">復元</string>
+  <string name="flash_ksu_lkm">KernelSU LKM ドライバをフラッシュ</string>
+  <string name="restore">復元</string>
   <string name="check_kernel_version">カーネルバージョンを確認</string>
   <string name="mount_vendor_dlkm">Vendor DLKM をマウント</string>
   <string name="unmount_vendor_dlkm">Vendor DLKM をアンマウント</string>
@@ -63,12 +63,12 @@
   <string name="backup_type">バックアップタイプ</string>
   <string name="hashes">ハッシュ</string>
   <string name="partition_selection_unavailable">レガシーバックアップではパーティションを選択できません</string>
-  <string name="boot_fmt">boot.img形式</string>
-  <string name="init_boot_fmt">init_boot.img形式</string>
-  <string name="ramdisk_fmt">Ramdisk形式</string>
-  <string name="susfs_version">SUSFSバージョン</string>
-    <string name="backup_now">選択したパーティションをバックアップする</string>
-    <string name="vendor_boot_fmt">vendor_boot.img形式</string>
-    <string name="active">アクティブ</string>
-    <!-- TODO: Make error and success messages string resources -->
+  <string name="boot_fmt">boot.img 形式</string>
+  <string name="init_boot_fmt">init_boot.img 形式</string>
+  <string name="ramdisk_fmt">Ramdisk 形式</string>
+  <string name="susfs_version">SUSFS バージョン</string>
+  <string name="backup_now">選択したパーティションをバックアップする</string>
+  <string name="vendor_boot_fmt">vendor_boot.img 形式</string>
+  <string name="active">アクティブ</string>
+  <!-- TODO: Make error and success messages string resources -->
 </resources>
