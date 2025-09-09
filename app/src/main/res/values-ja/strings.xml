@@ -70,5 +70,6 @@
   <string name="backup_now">選択したパーティションをバックアップする</string>
   <string name="vendor_boot_fmt">vendor_boot.img 形式</string>
   <string name="active">アクティブ</string>
-  <!-- TODO: Make error and success messages string resources -->
+  <string name="unbootable">起動不可</string>
+  <string name="successful">成功</string>
 </resources>
