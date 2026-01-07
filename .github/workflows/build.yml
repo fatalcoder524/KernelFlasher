@@ -48,7 +48,7 @@ jobs:
           echo "NEW_VERSION_NAME=${new_version}" >> $GITHUB_ENV
           echo "NEW_VERSION_CODE=${version_code}" >> $GITHUB_ENV
 
-      - name: Update build.gradle with new version code and version name
+      - name: Update build.gradle.kts with new version code and version name
         run: |
           # Update versionCode and versionName in build.gradle
           sed -i "s/versionCode [0-9]\+/versionCode ${NEW_VERSION_CODE}/" app/build.gradle
