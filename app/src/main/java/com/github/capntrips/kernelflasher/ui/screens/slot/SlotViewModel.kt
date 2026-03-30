@@ -78,6 +78,8 @@ class SlotViewModel(
         var bootImgInfo: BootImgInfo,
         var ramdiskInfo: RamdiskInfo,
     )
+    
+    
 
     private var _sha1: String? = null
     private val _slotInfo: MutableState<SlotInfo> = mutableStateOf(SlotInfo(BootSlotInfo(), BootImgInfo(), RamdiskInfo()))
@@ -494,7 +496,7 @@ class SlotViewModel(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun backup(context: Context) {
+    fun backup(context: Context, customName: String = "", slotSuffix: String = "") {
         launch {
             _clearFlash()
 
@@ -503,7 +505,14 @@ class SlotViewModel(
                 _slotInfo.value.bootImgInfo.kernelVersion ?: System.getProperty("os.version")!!
             }
 
-            val now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd--HH-mm"))
+            val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd--HH-mm"))
+            // Sanitize the custom name to prevent file system errors
+            val safeName = customName.replace(Regex("[^a-zA-Z0-9_-]"), "_")
+            val prefix = if (safeName.isNotBlank()) "${safeName}_" else ""
+            
+            // Forge the final directory name
+            val now = "$prefix$timestamp$slotSuffix"
+
             val backupDir = createBackupDir(context, now)
             addMessage("Saving backup $now")
             val hashes = backupPartitions(context, backupDir)

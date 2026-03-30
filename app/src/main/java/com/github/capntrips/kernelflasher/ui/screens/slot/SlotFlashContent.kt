@@ -11,6 +11,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
@@ -66,6 +72,8 @@ fun ColumnScope.SlotFlashContent(
     val isFlashImage = currentRoute.endsWith("/flash/image")
     val isBackup = currentRoute.endsWith("/backup")
     val isBackupResult = currentRoute.endsWith("/backup/backup")
+    var showBackupDialog by remember { mutableStateOf(false) }
+    var customBackupName by remember { mutableStateOf("") }
     val isFlashAk3 = currentRoute.endsWith("/flash/ak3")
     val isImageFlashResult = currentRoute.endsWith("/flash/image/flash")
 
@@ -154,10 +162,7 @@ fun ColumnScope.SlotFlashContent(
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(4.dp),
                 onClick = {
-                    viewModel.backup(context)
-                    navController.navigate("slot$slotSuffix/backup/backup") {
-                        popUpTo("slot$slotSuffix")
-                    }
+                    showBackupDialog = true
                 },
                 enabled = viewModel.backupPartitions.filter { it.value }.isNotEmpty()
             ) {
@@ -277,9 +282,15 @@ fun ColumnScope.SlotFlashContent(
             title = { Text("CAUTION!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Are you Sure you want to flash this file?", fontWeight = FontWeight.Bold)
-                    Text("", fontWeight = FontWeight.Bold)
-                    Text("$filename", fontWeight = FontWeight.Bold)
+                    Text("Are you sure you want to flash this file?", fontWeight = FontWeight.Bold)
+                    
+                    Text("Source: $filename")
+                    
+                    if (viewModel.flashActionType == "flashImage" && viewModel.flashActionPartName != null) {
+                        Text("Destination Partition: ${viewModel.flashActionPartName}", fontWeight = FontWeight.Bold)
+                    } else if (viewModel.flashActionType == "flashAk3" || viewModel.flashActionType == "flashAk3_mkbootfs") {
+                        Text("Destination: AnyKernel3 (Auto-detect)", fontWeight = FontWeight.Bold)
+                    }
                 }
             },
             confirmButton = {
@@ -345,4 +356,35 @@ fun ColumnScope.SlotFlashContent(
             modifier = Modifier.padding(16.dp)
         )
     }
+    if (showBackupDialog) {
+        AlertDialog(
+            onDismissRequest = { showBackupDialog = false },
+            title = { Text("Custom Backup Name") },
+            text = {
+                OutlinedTextField(
+                    value = customBackupName,
+                    onValueChange = { customBackupName = it },
+                    label = { Text("Optional Prefix (e.g. Sultan)") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showBackupDialog = false
+                    viewModel.backup(context, customBackupName, slotSuffix) // <-- Add the suffix here!
+                    navController.navigate("slot$slotSuffix/backup/backup") {
+                        popUpTo("slot$slotSuffix") 
+                    }
+                }) {
+                    Text("Start Backup")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBackupDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
+        
