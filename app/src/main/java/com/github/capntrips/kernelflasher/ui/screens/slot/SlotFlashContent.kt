@@ -371,7 +371,7 @@ fun ColumnScope.SlotFlashContent(
             confirmButton = {
                 TextButton(onClick = {
                     showBackupDialog = false
-                    viewModel.backup(context, customBackupName, slotSuffix) // <-- Add the suffix here!
+                    viewModel.backup(context, customBackupName, slotSuffix)
                     navController.navigate("slot$slotSuffix/backup/backup") {
                         popUpTo("slot$slotSuffix") 
                     }
