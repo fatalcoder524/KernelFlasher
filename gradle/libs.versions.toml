@@ -17,7 +17,7 @@ material = "1.14.0"
 okhttp = "5.4.0"
 
 android-application = "9.2.1"
-devtools-ksp = "2.3.4"
+devtools-ksp = "2.3.9"
 retrofit = "3.0.0"
 
 [libraries]

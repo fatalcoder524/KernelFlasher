@@ -74,7 +74,7 @@ class UpdatesViewModel(
             }
             try {
                 block()
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Log.e(TAG, e.message, e)
                     navController.navigate("error/${e.message}") {
