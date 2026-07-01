@@ -75,8 +75,8 @@ jobs:
       - name: Update build.gradle.kts with new version code and version name
         run: |
           # Update versionCode and versionName in build.gradle
-          sed -i "s/versionCode [0-9]\+/versionCode ${NEW_VERSION_CODE}/" app/build.gradle
-          sed -i "s/versionName \"[^\"]*\"/versionName \"${NEW_VERSION_NAME}\"/" app/build.gradle
+          sed -i "s/versionCode [0-9]\+/versionCode ${NEW_VERSION_CODE}/" app/build.gradle.kts
+          sed -i "s/versionName \"[^\"]*\"/versionName \"${NEW_VERSION_NAME}\"/" app/build.gradle.kts
 
       - name: Print Version
         run: |
@@ -117,7 +117,7 @@ jobs:
           git config user.email "github-actions@users.noreply.github.com"
           
           # Add modified build.gradle file
-          git add app/build.gradle
+          git add app/build.gradle.kts
           
           # Commit the changes
           git commit -m "Update versionName and versionCode to ${NEW_VERSION_NAME} and ${NEW_VERSION_CODE}"
