@@ -22,13 +22,23 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ExitToApp
+import androidx.compose.material.icons.outlined.Layers
+import androidx.compose.material.icons.outlined.SystemUpdateAlt
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.github.capntrips.kernelflasher.ui.components.DialogButton
 import com.github.capntrips.kernelflasher.ui.screens.RefreshableScreen
@@ -62,11 +73,8 @@ import com.github.capntrips.kernelflasher.ui.screens.main.MainViewModel
 import com.github.capntrips.kernelflasher.ui.screens.reboot.RebootContent
 import com.github.capntrips.kernelflasher.ui.screens.slot.SlotContent
 import com.github.capntrips.kernelflasher.ui.screens.slot.SlotFlashContent
-import com.github.capntrips.kernelflasher.ui.screens.updates.UpdatesAddContent
-import com.github.capntrips.kernelflasher.ui.screens.updates.UpdatesChangelogContent
-import com.github.capntrips.kernelflasher.ui.screens.updates.UpdatesContent
-import com.github.capntrips.kernelflasher.ui.screens.updates.UpdatesViewContent
 import com.github.capntrips.kernelflasher.ui.theme.KernelFlasherTheme
+import com.github.capntrips.kernelflasher.ui.theme.ThemePrefs
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
 import com.topjohnwu.superuser.nio.FileSystemManager
@@ -144,6 +152,7 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        ThemePrefs.load(this)
 
         val isZipIntent = intent?.action == Intent.ACTION_VIEW &&
                 (intent.type == "application/zip" || intent.data?.toString()?.endsWith(".zip") == true)
@@ -285,14 +294,8 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val dialogData = viewModel!!.updateDialogData
             LaunchedEffect(Unit) {
-                if(AppUpdater.hasActiveInternetConnection()) {
-                    AppUpdater.checkForUpdate(
-                        context.applicationContext,
-                        BuildConfig.VERSION_NAME
-                    ) { title, lines, confirm ->
-                        viewModel!!.showUpdateDialog(title, lines, confirm)
-                    }
-                }
+                // Self-update check disabled: this is a customised fork, and the upstream
+                // "Update APK" dialog would offer to replace this build with the stock one.
 
                 val uri = viewModel?.pendingFlashUri
 
@@ -334,11 +337,14 @@ class MainActivity : ComponentActivity() {
                     val slotViewModelA = mainViewModel.slotA
                     val slotViewModelB = mainViewModel.slotB
                     val backupsViewModel = mainViewModel.backups
-                    val updatesViewModel = mainViewModel.updates
                     val rebootViewModel = mainViewModel.reboot
-                    BackHandler(enabled = !mainViewModel.isRefreshing, onBack = {})
-                    // New back handler for exit
-                    BackHandler(enabled = true) {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val isMainScreen = navBackStackEntry?.destination?.route == "main"
+                    // Block back entirely while a root operation is in progress.
+                    BackHandler(enabled = mainViewModel.isRefreshing) {}
+                    // Only confirm-exit on the main screen. On any sub-page this handler is
+                    // disabled, so back falls through to the NavHost and pops to the previous page.
+                    BackHandler(enabled = isMainScreen && !mainViewModel.isRefreshing) {
                         showExitDialog = true
                     }
                     val slotContentA: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit = { backStackEntry ->
@@ -464,7 +470,26 @@ class MainActivity : ComponentActivity() {
                         }
 
                     }
-                    NavHost(navController = navController, startDestination = "main") {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "main",
+                        enterTransition = {
+                            slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = tween(300)) +
+                                    fadeIn(tween(300))
+                        },
+                        exitTransition = {
+                            slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = tween(300)) +
+                                    fadeOut(tween(300))
+                        },
+                        popEnterTransition = {
+                            slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = tween(300)) +
+                                    fadeIn(tween(300))
+                        },
+                        popExitTransition = {
+                            slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(300)) +
+                                    fadeOut(tween(300))
+                        }
+                    ) {
                         composable("main") {
                             RefreshableScreen(mainViewModel, navController, swipeEnabled = true) {
                                 MainContent(mainViewModel, navController)
@@ -524,38 +549,6 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
-                        composable("updates") {
-                            updatesViewModel.clearCurrent()
-                            RefreshableScreen(mainViewModel, navController) {
-                                UpdatesContent(updatesViewModel, navController)
-                            }
-                        }
-                        composable("updates/add") {
-                            RefreshableScreen(mainViewModel, navController) {
-                                UpdatesAddContent(updatesViewModel, navController)
-                            }
-                        }
-                        composable("updates/view/{updateId}") { backStackEntry ->
-                            val updateId = backStackEntry.arguments?.getString("updateId")!!.toInt()
-                            val currentUpdate = updatesViewModel.updates.firstOrNull { it.id == updateId }
-                            updatesViewModel.currentUpdate = currentUpdate
-                            if (updatesViewModel.currentUpdate != null) {
-                                // TODO: enable swipe refresh
-                                RefreshableScreen(mainViewModel, navController) {
-                                    UpdatesViewContent(updatesViewModel, navController)
-                                }
-                            }
-                        }
-                        composable("updates/view/{updateId}/changelog") { backStackEntry ->
-                            val updateId = backStackEntry.arguments?.getString("updateId")!!.toInt()
-                            val currentUpdate = updatesViewModel.updates.firstOrNull { it.id == updateId }
-                            updatesViewModel.currentUpdate = currentUpdate
-                            if (updatesViewModel.currentUpdate != null) {
-                                RefreshableScreen(mainViewModel, navController) {
-                                    UpdatesChangelogContent(updatesViewModel, navController)
-                                }
-                            }
-                        }
                         composable("reboot") {
                             RefreshableScreen(mainViewModel, navController) {
                                 RebootContent(rebootViewModel, navController)
@@ -573,6 +566,7 @@ class MainActivity : ComponentActivity() {
                 if (dialogData != null) {
                     AlertDialog(
                         onDismissRequest = { viewModel!!.hideUpdateDialog() },
+                        icon = { Icon(Icons.Outlined.SystemUpdateAlt, contentDescription = null) },
                         title = {
                             Text(
                                 dialogData.title,
@@ -605,6 +599,7 @@ class MainActivity : ComponentActivity() {
                 if (showExitDialog) {
                     AlertDialog(
                         onDismissRequest = { showExitDialog = false },
+                        icon = { Icon(Icons.AutoMirrored.Outlined.ExitToApp, contentDescription = null) },
                         title = { Text("Exit App") },
                         text = { Text("Are you sure you want to exit?") },
                         confirmButton = {
@@ -628,6 +623,7 @@ class MainActivity : ComponentActivity() {
                 if (viewModel?.showSlotIntentDialog?.value == true) {
                     AlertDialog(
                         onDismissRequest = { viewModel?.showSlotIntentDialog?.value = false },
+                        icon = { Icon(Icons.Outlined.Layers, contentDescription = null) },
                         title = { Text("Select Slot to Flash") },
                         text = { Text("Choose the slot where the zip should be flashed.") },
                         confirmButton = {

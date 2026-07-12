@@ -33,7 +33,6 @@
     <string name="flash_partition_image">Sflashuj obraz partycji</string>
     <string name="flash_ksu_lkm">Sflashuj KernelSU LKM Driver</string>
     <string name="restore">Przywróć</string>
-    <string name="check_kernel_version">Sprawdź wersję jądra</string>
     <string name="mount_vendor_dlkm">Zamontuj Vendor DLKM</string>
     <string name="unmount_vendor_dlkm">Odmontuj Vendor DLKM</string>
     <string name="migrate">Migruj</string>

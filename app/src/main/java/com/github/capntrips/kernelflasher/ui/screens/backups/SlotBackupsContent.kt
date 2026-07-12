@@ -1,27 +1,23 @@
 package com.github.capntrips.kernelflasher.ui.screens.backups
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.FlashOn
+import androidx.compose.material.icons.outlined.RestartAlt
+import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -33,10 +29,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.capntrips.kernelflasher.R
 import com.github.capntrips.kernelflasher.common.PartitionUtil
+import com.github.capntrips.kernelflasher.ui.components.ActionTile
+import com.github.capntrips.kernelflasher.ui.components.TileColors
 import com.github.capntrips.kernelflasher.ui.components.DataCard
 import com.github.capntrips.kernelflasher.ui.components.DataRow
 import com.github.capntrips.kernelflasher.ui.components.DataSet
 import com.github.capntrips.kernelflasher.ui.components.FlashList
+import com.github.capntrips.kernelflasher.ui.components.PartitionToggle
 import com.github.capntrips.kernelflasher.ui.components.SlotCard
 import com.github.capntrips.kernelflasher.ui.components.ViewButton
 import com.github.capntrips.kernelflasher.ui.screens.slot.SlotViewModel
@@ -105,53 +104,46 @@ fun ColumnScope.SlotBackupsContent(
                     Spacer(Modifier.height(5.dp))
                     if (slotViewModel.isActive) {
                         if (currentBackup.type == "raw") {
-                            OutlinedButton(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                shape = RoundedCornerShape(4.dp),
+                            ActionTile(
+                                text = stringResource(R.string.restore),
+                                icon = Icons.Outlined.SettingsBackupRestore,
+                                accent = TileColors.Violet,
+                                showChevron = true,
                                 onClick = {
                                     navController.navigate("slot$slotSuffix/backups/${backupsViewModel.currentBackup!!}/restore")
                                 }
-                            ) {
-                                Text(stringResource(R.string.restore))
-                            }
+                            )
                         } else if (currentBackup.type == "ak3") {
-                            OutlinedButton(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                shape = RoundedCornerShape(4.dp),
+                            ActionTile(
+                                text = stringResource(R.string.flash),
+                                icon = Icons.Outlined.FlashOn,
+                                accent = TileColors.Amber,
                                 onClick = {
                                     slotViewModel.flashAk3(context, backupsViewModel.currentBackup!!, currentBackup.filename!!)
                                     navController.navigate("slot$slotSuffix/backups/${backupsViewModel.currentBackup!!}/flash/ak3") {
                                         popUpTo("slot$slotSuffix")
                                     }
                                 }
-                            ) {
-                                Text(stringResource(R.string.flash))
-                            }
-                            OutlinedButton(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                shape = RoundedCornerShape(4.dp),
+                            )
+                            ActionTile(
+                                text = stringResource(R.string.flash_ak3_zip_mkbootfs),
+                                icon = Icons.Outlined.FlashOn,
+                                accent = TileColors.Amber,
                                 onClick = {
                                     slotViewModel.flashAk3_mkbootfs(context, backupsViewModel.currentBackup!!, currentBackup.filename!!)
                                     navController.navigate("slot$slotSuffix/backups/${backupsViewModel.currentBackup!!}/flash/ak3") {
                                         popUpTo("slot$slotSuffix")
                                     }
                                 }
-                            ) {
-                                Text(stringResource(R.string.flash_ak3_zip_mkbootfs))
-                            }
+                            )
                         }
                     }
-                    OutlinedButton(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp),
+                    ActionTile(
+                        text = stringResource(R.string.delete),
+                        icon = Icons.Outlined.Delete,
+                        accent = TileColors.Rose,
                         onClick = { backupsViewModel.delete(context) { navController.popBackStack() } }
-                    ) {
-                        Text(stringResource(R.string.delete))
-                    }
+                    )
                 }
             }
         } else {
@@ -186,34 +178,19 @@ fun ColumnScope.SlotBackupsContent(
     } else if (navController.currentDestination!!.route!!.endsWith("/backups/{backupId}/restore")) {
         DataCard (stringResource(R.string.restore))
         Spacer(Modifier.height(5.dp))
-        val disabledColor = ButtonDefaults.buttonColors(
-            Color.Transparent,
-            MaterialTheme.colorScheme.onSurface
-        )
         val currentBackup = backupsViewModel.backups.getValue(backupsViewModel.currentBackup!!)
         if (currentBackup.hashes != null) {
             for (partitionName in PartitionUtil.PartitionNames) {
                 val hash = currentBackup.hashes[partitionName]
                 if (hash != null) {
-                    OutlinedButton(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .alpha(if (backupsViewModel.backupPartitions[partitionName] == true) 1.0f else 0.5f),
-                        shape = RoundedCornerShape(4.dp),
-                        colors = if (backupsViewModel.backupPartitions[partitionName] == true) ButtonDefaults.outlinedButtonColors() else disabledColor,
+                    PartitionToggle(
+                        name = partitionName,
+                        checked = backupsViewModel.backupPartitions[partitionName] == true,
                         enabled = backupsViewModel.backupPartitions[partitionName] != null,
-                        onClick = {
+                        onToggle = {
                             backupsViewModel.backupPartitions[partitionName] = !backupsViewModel.backupPartitions[partitionName]!!
-                        },
-                    ) {
-                        Box(Modifier.fillMaxWidth()) {
-                            Checkbox(backupsViewModel.backupPartitions[partitionName] == true, null,
-                                Modifier
-                                    .align(Alignment.CenterStart)
-                                    .offset(x = -(16.dp)))
-                            Text(partitionName, Modifier.align(Alignment.Center))
                         }
-                    }
+                    )
                 }
             }
         } else {
@@ -225,22 +202,20 @@ fun ColumnScope.SlotBackupsContent(
             )
             Spacer(Modifier.height(5.dp))
         }
-        OutlinedButton(
-            modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(4.dp),
+        ActionTile(
+            text = stringResource(R.string.restore),
+            icon = Icons.Outlined.SettingsBackupRestore,
+            accent = TileColors.Violet,
+            enabled = currentBackup.hashes == null || (PartitionUtil.PartitionNames.none {
+                currentBackup.hashes[it] != null && backupsViewModel.backupPartitions[it] == null
+            } && backupsViewModel.backupPartitions.filter { it.value }.isNotEmpty()),
             onClick = {
                 backupsViewModel.restore(context, slotSuffix)
                 navController.navigate("slot$slotSuffix/backups/${backupsViewModel.currentBackup!!}/restore/restore") {
                     popUpTo("slot$slotSuffix")
                 }
-            },
-            enabled = currentBackup.hashes == null || (PartitionUtil.PartitionNames.none {
-                currentBackup.hashes[it] != null && backupsViewModel.backupPartitions[it] == null
-            } && backupsViewModel.backupPartitions.filter { it.value }.isNotEmpty())
-        ) {
-            Text(stringResource(R.string.restore))
-        }
+            }
+        )
     } else {
         FlashList(
             stringResource(R.string.restore),
@@ -249,14 +224,12 @@ fun ColumnScope.SlotBackupsContent(
             AnimatedVisibility(!backupsViewModel.isRefreshing && backupsViewModel.wasRestored != null) {
                 Column {
                     if (backupsViewModel.wasRestored != false) {
-                        OutlinedButton(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            shape = RoundedCornerShape(4.dp),
+                        ActionTile(
+                            text = stringResource(R.string.reboot),
+                            icon = Icons.Outlined.RestartAlt,
+                            accent = TileColors.Rose,
                             onClick = { navController.navigate("reboot") }
-                        ) {
-                            Text(stringResource(R.string.reboot))
-                        }
+                        )
                     }
                 }
             }

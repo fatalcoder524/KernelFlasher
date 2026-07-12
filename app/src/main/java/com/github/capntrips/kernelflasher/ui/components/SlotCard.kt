@@ -25,7 +25,8 @@ fun SlotCard(
     showDlkm: Boolean = true,
 ) {
     DataCard (
-        title = "$title ${if(viewModel.isActive && viewModel.slotSuffix !="") "[${stringResource(R.string.active)}]" else ""}",
+        title = title,
+        badge = if (viewModel.isActive && viewModel.slotSuffix != "") stringResource(R.string.active).uppercase() else null,
         button = {
             if (!isSlotScreen) {
                 AnimatedVisibility(!viewModel.isRefreshing.value) {
@@ -85,13 +86,13 @@ fun SlotCard(
                 label = stringResource(R.string.unbootable),
                 value = viewModel.slotInfo.bootSlotInfo.unbootable ?: stringResource(R.string.not_found),
                 mutableMaxWidth = cardWidth,
-                valueColor = if (viewModel.slotInfo.bootSlotInfo.unbootable == "Yes") Color.Red else Color.Unspecified
+                valueColor = if (viewModel.slotInfo.bootSlotInfo.unbootable == "Yes") MaterialTheme.colorScheme.error else Color.Unspecified
             )
             DataRow(
                 label = stringResource(R.string.successful),
                 value = viewModel.slotInfo.bootSlotInfo.successful ?: stringResource(R.string.not_found),
                 mutableMaxWidth = cardWidth,
-                valueColor = if (viewModel.slotInfo.bootSlotInfo.successful == "No") Color.Red else Color.Unspecified
+                valueColor = if (viewModel.slotInfo.bootSlotInfo.successful == "No") MaterialTheme.colorScheme.error else Color.Unspecified
             )
         }
         if (!viewModel.isRefreshing.value && viewModel.hasError) {

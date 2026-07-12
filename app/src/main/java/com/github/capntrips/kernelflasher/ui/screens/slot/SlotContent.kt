@@ -5,12 +5,15 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.FlashOn
+import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.LinkOff
+import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material.icons.outlined.SettingsBackupRestore
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -19,7 +22,9 @@ import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.capntrips.kernelflasher.R
+import com.github.capntrips.kernelflasher.ui.components.ActionTile
 import com.github.capntrips.kernelflasher.ui.components.SlotCard
+import com.github.capntrips.kernelflasher.ui.components.TileColors
 
 @ExperimentalAnimationApi
 @ExperimentalMaterial3Api
@@ -39,87 +44,64 @@ fun ColumnScope.SlotContent(
     )
     AnimatedVisibility(!viewModel.isRefreshing.value) {
         Column {
-            Spacer(Modifier.height(5.dp))
-            OutlinedButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
-                onClick = {
-                    navController.navigate("slot$slotSuffix/flash")
-                }
-            ) {
-                Text(stringResource(R.string.flash))
-            }
-            OutlinedButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
+            Spacer(Modifier.height(12.dp))
+            ActionTile(
+                text = stringResource(R.string.flash),
+                icon = Icons.Outlined.FlashOn,
+                accent = TileColors.Amber,
+                showChevron = true,
+                onClick = { navController.navigate("slot$slotSuffix/flash") }
+            )
+            ActionTile(
+                text = stringResource(R.string.backup),
+                icon = Icons.Outlined.Save,
+                accent = TileColors.Green,
+                showChevron = true,
                 onClick = {
                     viewModel.clearFlash(context)
                     navController.navigate("slot$slotSuffix/backup")
                 }
-            ) {
-                Text(stringResource(R.string.backup))
-            }
-            OutlinedButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
-                onClick = {
-                    navController.navigate("slot$slotSuffix/backups")
-                }
-            ) {
-                Text(stringResource(R.string.restore))
-            }
-            OutlinedButton(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
-                onClick = { if (!viewModel.isRefreshing.value) viewModel.getKernel(context) }
-            ) {
-                Text(stringResource(R.string.check_kernel_version))
-            }
+            )
+            ActionTile(
+                text = stringResource(R.string.restore),
+                icon = Icons.Outlined.SettingsBackupRestore,
+                accent = TileColors.Violet,
+                showChevron = true,
+                onClick = { navController.navigate("slot$slotSuffix/backups") }
+            )
             if (viewModel.hasVendorDlkm) {
                 AnimatedVisibility(!viewModel.isRefreshing.value) {
                     AnimatedVisibility(viewModel.isVendorDlkmMounted) {
-                        OutlinedButton(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            shape = RoundedCornerShape(4.dp),
+                        ActionTile(
+                            text = stringResource(R.string.unmount_vendor_dlkm),
+                            icon = Icons.Outlined.LinkOff,
+                            accent = TileColors.Rose,
                             onClick = { viewModel.unmountVendorDlkm(context) }
-                        ) {
-                            Text(stringResource(R.string.unmount_vendor_dlkm))
-                        }
+                        )
                     }
                     AnimatedVisibility(!viewModel.isVendorDlkmMounted && viewModel.isVendorDlkmMapped) {
                         Column {
-                            OutlinedButton(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                shape = RoundedCornerShape(4.dp),
+                            ActionTile(
+                                text = stringResource(R.string.mount_vendor_dlkm),
+                                icon = Icons.Outlined.Link,
+                                accent = TileColors.Cyan,
                                 onClick = { viewModel.mountVendorDlkm(context) }
-                            ) {
-                                Text(stringResource(R.string.mount_vendor_dlkm))
-                            }
-                            OutlinedButton(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
-                                shape = RoundedCornerShape(4.dp),
+                            )
+                            ActionTile(
+                                text = stringResource(R.string.unmap_vendor_dlkm),
+                                icon = Icons.Outlined.LinkOff,
+                                accent = TileColors.Amber,
                                 onClick = { viewModel.unmapVendorDlkm(context) }
-                            ) {
-                                Text(stringResource(R.string.unmap_vendor_dlkm))
-                            }
+                            )
                         }
                     }
                     AnimatedVisibility(!viewModel.isVendorDlkmMounted && !viewModel.isVendorDlkmMapped) {
-                        OutlinedButton(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            shape = RoundedCornerShape(4.dp),
+                        ActionTile(
+                            text = stringResource(R.string.map_vendor_dlkm),
+                            icon = Icons.Outlined.Storage,
+                            accent = TileColors.Cyan,
                             onClick = { viewModel.mapVendorDlkm(context) }
-                        ) {
-                            Text(stringResource(R.string.map_vendor_dlkm))
-                        }
+                        )
                     }
                 }
             }

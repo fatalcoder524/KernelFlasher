@@ -52,6 +52,7 @@ class MainViewModel(
 
     private val _isRefreshing: MutableState<Boolean> = mutableStateOf(true)
     private val _isRefreshRequired = mutableStateOf(true)
+    private val _snackbarMessage = mutableStateOf<String?>(null)
     private var _error: String? = null
     private var _backups: MutableMap<String, Backup> = mutableMapOf()
     var showSlotIntentDialog: MutableState<Boolean> = mutableStateOf(false)
@@ -63,6 +64,12 @@ class MainViewModel(
         get() = _isRefreshing.value
     val isRefreshRequired: Boolean
         get() = _isRefreshRequired.value
+    val snackbarMessage: String?
+        get() = _snackbarMessage.value
+
+    fun clearSnackbar() {
+        _snackbarMessage.value = null
+    }
     val hasError: Boolean
         get() = _error != null
     val error: String
@@ -162,12 +169,30 @@ class MainViewModel(
         }
     }
 
+    // Like [launch] but without toggling the shared refresh state. Lightweight one-shot
+    // actions (saving a log file) shouldn't trigger the pull-to-refresh spinner or
+    // collapse the navigation tiles — feedback is given via the Toast in [log].
+    private fun launchQuiet(block: suspend () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                block()
+            } catch (e: Exception) {
+                withContext (Dispatchers.Main) {
+                    Log.e(TAG, e.message, e)
+                    navController.navigate("error/${e.message}") {
+                        popUpTo("main")
+                    }
+                }
+            }
+        }
+    }
+
     @Suppress("SameParameterValue")
     private fun log(context: Context, message: String, shouldThrow: Boolean = false) {
         Log.d(TAG, message)
         if (!shouldThrow) {
             viewModelScope.launch(Dispatchers.Main) {
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                _snackbarMessage.value = message
             }
         } else {
             throw Exception(message)
@@ -175,7 +200,7 @@ class MainViewModel(
     }
 
     fun saveRamoops(context: Context) {
-        launch {
+        launchQuiet {
             val now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd--HH-mm"))
             @SuppressLint("SdCardPath")
             val ramoops = File("/sdcard/Download/console-ramoops--$now.log")
@@ -189,7 +214,7 @@ class MainViewModel(
     }
 
     fun saveDmesg(context: Context) {
-        launch {
+        launchQuiet {
             val now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd--HH-mm"))
             @SuppressLint("SdCardPath")
             val dmesg = File("/sdcard/Download/dmesg--$now.log")
@@ -203,7 +228,7 @@ class MainViewModel(
     }
 
     fun saveLogcat(context: Context) {
-        launch {
+        launchQuiet {
             val now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd--HH-mm"))
             @SuppressLint("SdCardPath")
             val logcat = File("/sdcard/Download/logcat--$now.log")

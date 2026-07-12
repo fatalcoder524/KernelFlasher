@@ -23,6 +23,7 @@
     <string name="save_dmesg">Save dmesg</string>
     <string name="save_logcat">Save logcat</string>
     <string name="back">Back</string>
+    <string name="toggle_theme">Toggle light/dark theme</string>
     <string name="backup">Backup</string>
     <string name="updates">Updates</string>
     <string name="flash">Flash</string>
@@ -32,7 +33,6 @@
     <string name="flash_partition_image">Flash Partition Image</string>
     <string name="flash_ksu_lkm">Flash KernelSU LKM Driver</string>
     <string name="restore">Restore</string>
-    <string name="check_kernel_version">Check Kernel Version</string>
     <string name="mount_vendor_dlkm">Mount Vendor DLKM</string>
     <string name="unmount_vendor_dlkm">Unmount Vendor DLKM</string>
     <string name="map_vendor_dlkm">Map Vendor DLKM</string>

@@ -235,7 +235,16 @@ class SlotViewModel(
             _backupPartitions[partitionName] = true
         }
 
-        _slotInfo.value.bootImgInfo.kernelVersion = null
+        // Show the kernel version directly, without needing the old "check" button. The
+        // active slot is the running kernel, so report the full uname (release + version);
+        // an inactive slot reads its version from its own boot image.
+        if (isActive) {
+            _slotInfo.value.bootImgInfo.kernelVersion =
+                Shell.cmd("echo $(uname -r) $(uname -v)").exec().out.firstOrNull()
+        } else {
+            _slotInfo.value.bootImgInfo.kernelVersion = null
+            _getKernel(context)
+        }
         inInit = false
     }
 
@@ -369,11 +378,6 @@ class SlotViewModel(
         Shell.cmd("$magiskboot cleanup").exec()
     }
 
-    fun getKernel(context: Context) {
-        launch {
-            _getKernel(context)
-        }
-    }
 
     private fun isPartitionMounted(partition: File): Boolean {
         @Suppress("LiftReturnOrAssignment")

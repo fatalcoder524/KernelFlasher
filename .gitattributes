@@ -1,0 +1,12 @@
+# This repo is worked on from Windows where core.autocrlf=true. Shell scripts in
+# assets/ are executed on-device by Android's /system/bin/sh, which cannot tolerate
+# CRLF line endings (a trailing \r breaks every line). Force LF for all shell scripts
+# and treat the prebuilt ELF binaries as binary so they are never line-ending converted.
+
+*.sh text eol=lf
+
+app/src/main/assets/flash_ak3.sh          text eol=lf
+app/src/main/assets/flash_ak3_mkbootfs.sh text eol=lf
+
+app/src/main/assets/ksuinit  binary
+app/src/main/assets/mkbootfs binary

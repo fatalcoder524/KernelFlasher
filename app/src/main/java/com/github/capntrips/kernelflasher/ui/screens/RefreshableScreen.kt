@@ -7,37 +7,46 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.capntrips.kernelflasher.R
 import com.github.capntrips.kernelflasher.ui.screens.main.MainViewModel
+import com.github.capntrips.kernelflasher.ui.theme.ThemePrefs
 import kotlinx.serialization.ExperimentalSerializationApi
 
 @ExperimentalMaterialApi
@@ -50,55 +59,74 @@ fun RefreshableScreen(
     swipeEnabled: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val statusBar = WindowInsets.statusBars.only(WindowInsetsSides.Top).asPaddingValues()
     val navigationBars = WindowInsets.navigationBars.asPaddingValues()
     val context = LocalContext.current
-    val state = rememberPullRefreshState(viewModel.isRefreshing, onRefresh = {
-        viewModel.refresh(context)
-    })
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(viewModel.snackbarMessage) {
+        viewModel.snackbarMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearSnackbar()
+        }
+    }
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    modifier = Modifier.padding(12.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
         topBar = {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(statusBar)) {
-                if (navController.previousBackStackEntry != null) {
-                    AnimatedVisibility(
-                        !viewModel.isRefreshing,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        IconButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier.padding(16.dp, 8.dp, 0.dp, 8.dp)
+            CenterAlignedTopAppBar(
+                scrollBehavior = scrollBehavior,
+                title = {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
+                navigationIcon = {
+                    if (navController.previousBackStackEntry != null) {
+                        AnimatedVisibility(
+                            !viewModel.isRefreshing,
+                            enter = fadeIn(),
+                            exit = fadeOut()
                         ) {
-                            Icon(
-                                Icons.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.back),
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.back)
+                                )
+                            }
                         }
                     }
-                }
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)) {
-                    Text(
-                        modifier = Modifier.align(Alignment.Center),
-                        text = stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                }
-            }
+                },
+                actions = {
+                    val userDark by ThemePrefs.darkTheme
+                    val isDark = userDark ?: isSystemInDarkTheme()
+                    IconButton(onClick = { ThemePrefs.setDarkTheme(context, !isDark) }) {
+                        Icon(
+                            if (isDark) Icons.Outlined.LightMode else Icons.Outlined.DarkMode,
+                            contentDescription = stringResource(R.string.toggle_theme),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .padding(paddingValues)
-                .pullRefresh(state, swipeEnabled)
-                .fillMaxSize(),
-        ) {
+        val screenContent: @Composable () -> Unit = {
             Column(
                 modifier = Modifier
                     .padding(16.dp, 0.dp, 16.dp, 16.dp + navigationBars.calculateBottomPadding())
@@ -106,14 +134,25 @@ fun RefreshableScreen(
                     .verticalScroll(rememberScrollState()),
                 content = content
             )
-            PullRefreshIndicator(
-                viewModel.isRefreshing,
-                state = state,
-                modifier = Modifier.align(Alignment.TopCenter),
-                backgroundColor = MaterialTheme.colorScheme.background,
-                contentColor = MaterialTheme.colorScheme.primaryContainer,
-                scale = true
-            )
+        }
+        if (swipeEnabled) {
+            PullToRefreshBox(
+                isRefreshing = viewModel.isRefreshing,
+                onRefresh = { viewModel.refresh(context) },
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+            ) {
+                screenContent()
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+            ) {
+                screenContent()
+            }
         }
     }
 }

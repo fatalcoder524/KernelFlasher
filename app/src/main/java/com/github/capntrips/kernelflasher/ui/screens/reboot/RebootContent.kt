@@ -1,19 +1,18 @@
 package com.github.capntrips.kernelflasher.ui.screens.reboot
 
-import android.os.Build
-import android.os.PowerManager
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Build
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.RestartAlt
+import androidx.compose.material.icons.outlined.Usb
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.capntrips.kernelflasher.R
+import com.github.capntrips.kernelflasher.ui.components.ActionTile
+import com.github.capntrips.kernelflasher.ui.components.TileColors
 
 @Suppress("UnusedReceiverParameter")
 @Composable
@@ -21,45 +20,34 @@ fun ColumnScope.RebootContent(
     viewModel: RebootViewModel,
     @Suppress("UNUSED_PARAMETER") ignoredNavController: NavController
 ) {
-    val context = LocalContext.current
-    OutlinedButton(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(4.dp),
+    ActionTile(
+        text = stringResource(R.string.reboot),
+        icon = Icons.Outlined.RestartAlt,
+        accent = TileColors.Blue,
         onClick = { viewModel.rebootSystem() }
-    ) {
-        Text(stringResource(R.string.reboot))
-    }
-    OutlinedButton(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(4.dp),
+    )
+    ActionTile(
+        text = stringResource(R.string.reboot_recovery),
+        icon = Icons.Outlined.Build,
+        accent = TileColors.Amber,
         onClick = { viewModel.rebootRecovery() }
-    ) {
-        Text(stringResource(R.string.reboot_recovery))
-    }
-    OutlinedButton(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(4.dp),
+    )
+    ActionTile(
+        text = stringResource(R.string.reboot_bootloader),
+        icon = Icons.Outlined.Code,
+        accent = TileColors.Violet,
         onClick = { viewModel.rebootBootloader() }
-    ) {
-        Text(stringResource(R.string.reboot_bootloader))
-    }
-    OutlinedButton(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(4.dp),
+    )
+    ActionTile(
+        text = stringResource(R.string.reboot_download),
+        icon = Icons.Outlined.Download,
+        accent = TileColors.Cyan,
         onClick = { viewModel.rebootDownload() }
-    ) {
-        Text(stringResource(R.string.reboot_download))
-    }
-    OutlinedButton(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(4.dp),
+    )
+    ActionTile(
+        text = stringResource(R.string.reboot_edl),
+        icon = Icons.Outlined.Usb,
+        accent = TileColors.Rose,
         onClick = { viewModel.rebootEdl() }
-    ) {
-        Text(stringResource(R.string.reboot_edl))
-    }
+    )
 }
