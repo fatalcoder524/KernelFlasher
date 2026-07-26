@@ -47,8 +47,7 @@ fun ColumnScope.BackupsContent(
         DataCard (viewModel.currentBackup!!) {
             val cardWidth = remember { mutableIntStateOf(0) }
             val backupId = viewModel.currentBackup!!
-            val currentBackup = viewModel.backups[backupId]
-            if(currentBackup == null) return@DataCard
+            val currentBackup = viewModel.backups[backupId] ?: return@DataCard
             DataRow(stringResource(R.string.backup_type), currentBackup.type, mutableMaxWidth = cardWidth)
             DataRow(stringResource(R.string.kernel_version), currentBackup.kernelVersion, mutableMaxWidth = cardWidth, clickable = true)
             if (currentBackup.type == "raw") {

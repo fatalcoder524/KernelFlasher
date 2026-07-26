@@ -31,6 +31,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.io.path.Path
 import kotlin.io.path.name
+import androidx.core.net.toUri
 
 @ExperimentalSerializationApi
 class UpdatesViewModel(
@@ -74,7 +75,7 @@ class UpdatesViewModel(
             try {
                 block()
             } catch (e: Exception) {
-                withContext (Dispatchers.Main) {
+                withContext(Dispatchers.Main) {
                     Log.e(TAG, e.message, e)
                     navController.navigate("error/${e.message}") {
                         popUpTo("main")
@@ -112,7 +113,7 @@ class UpdatesViewModel(
 
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("Unexpected response: $response")
-                val update: Update = Json.decodeFromString(UpdateSerializer, response.body!!.string())
+                val update: Update = Json.decodeFromString(UpdateSerializer, response.body.string())
                 update.updateUri = url
                 update.lastUpdated = Date()
                 val updateId = updateDao.insert(update).toInt()
@@ -133,7 +134,7 @@ class UpdatesViewModel(
 
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("Unexpected response: $response")
-                val update: Update = Json.decodeFromString(UpdateSerializer, response.body!!.string())
+                val update: Update = Json.decodeFromString(UpdateSerializer, response.body.string())
                 currentUpdate!!.let {
                     withContext (Dispatchers.Main) {
                         it.kernelName = update.kernelName
@@ -161,7 +162,7 @@ class UpdatesViewModel(
 
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("Unexpected response: $response")
-                changelog = response.body!!.string()
+                changelog = response.body.string()
                 withContext (Dispatchers.Main) {
                     callback.invoke()
                 }
@@ -180,7 +181,7 @@ class UpdatesViewModel(
 
     fun downloadKernel(context: Context) {
         launch {
-            val remoteUri = Uri.parse(currentUpdate!!.kernelLink)
+            val remoteUri = currentUpdate!!.kernelLink.toUri()
             val filename = Path(remoteUri.path!!).name
             val localUri = insertDownload(context, filename)
             localUri!!.let { uri ->
@@ -190,7 +191,7 @@ class UpdatesViewModel(
 
                 client.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) throw IOException("Unexpected response: $response")
-                    response.body!!.byteStream().use { inputStream ->
+                    response.body.byteStream().use { inputStream ->
                         context.contentResolver.openOutputStream(uri)!!.use { outputStream ->
                             inputStream.copyTo(outputStream)
                         }
