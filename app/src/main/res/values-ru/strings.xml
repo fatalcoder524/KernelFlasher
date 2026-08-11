@@ -32,7 +32,6 @@
     <string name="flash_partition_image">Прошить образ раздела</string>
     <string name="flash_ksu_lkm">Прошивка KernelSU LKM Driver</string>
     <string name="restore">Восстановить</string>
-    <string name="check_kernel_version">Проверить версию ядра</string>
     <string name="mount_vendor_dlkm">Подключить Vendor DLKM</string>
     <string name="unmount_vendor_dlkm">Отключить Vendor DLKM</string>
     <string name="map_vendor_dlkm">Сопоставить Vendor DLKM</string>

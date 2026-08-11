@@ -1,9 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.devtools.ksp)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.compose.compiler)
+}
+
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -36,13 +45,31 @@ android {
         }
         }
 
+        signingConfigs {
+            if (keystoreProperties.isNotEmpty()) {
+                create("release") {
+                    storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                    storePassword = keystoreProperties.getProperty("storePassword")
+                    keyAlias = keystoreProperties.getProperty("keyAlias")
+                    keyPassword = keystoreProperties.getProperty("keyPassword")
+                }
+            }
+        }
+
         buildTypes {
             release {
-                isMinifyEnabled = false
-                isShrinkResources = false
+                // R8 minify + resource shrinking are ON to keep the APK small (mainly to
+                // tree-shake material-icons-extended). Keep rules in proguard-rules.pro cover
+                // AIDL/serialization/libsu/retrofit/gson, and -dontobfuscate protects Room and
+                // reflection-by-name. Verify core flows on-device after changing keep rules.
+                isMinifyEnabled = true
+                isShrinkResources = true
                 proguardFiles(
                     getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
                 )
+                if (keystoreProperties.isNotEmpty()) {
+                    signingConfig = signingConfigs.getByName("release")
+                }
             }
         }
 
@@ -95,6 +122,7 @@ android {
         implementation(libs.androidx.appcompat)
         implementation(libs.androidx.compose.material)
         implementation(libs.androidx.compose.material3)
+        implementation(libs.androidx.compose.material.icons.extended)
         implementation(libs.androidx.compose.foundation)
         implementation(libs.androidx.compose.ui)
         implementation(libs.androidx.core.ktx)

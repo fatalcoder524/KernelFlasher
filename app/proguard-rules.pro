@@ -53,3 +53,13 @@
 
 # Keep VectorDrawableCompat to avoid crashes or inflation errors
 -keep class androidx.vectordrawable.graphics.drawable.VectorDrawableCompat { *; }
+# ============ KOTLINX.SERIALIZATION (app models: backups, partitions, updates) ============
+-keepattributes InnerClasses
+-keep,includedescriptorclasses class com.github.capntrips.kernelflasher.**$$serializer { *; }
+-keepclassmembers class com.github.capntrips.kernelflasher.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.github.capntrips.kernelflasher.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep class com.github.capntrips.kernelflasher.common.types.** { *; }

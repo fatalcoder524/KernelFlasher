@@ -33,7 +33,6 @@
   <string name="flash_partition_image">パーティションイメージをフラッシュ</string>
   <string name="flash_ksu_lkm">KernelSU LKM ドライバをフラッシュ</string>
   <string name="restore">復元</string>
-  <string name="check_kernel_version">カーネルバージョンを確認</string>
   <string name="mount_vendor_dlkm">Vendor DLKM をマウント</string>
   <string name="unmount_vendor_dlkm">Vendor DLKM をアンマウント</string>
   <string name="map_vendor_dlkm">Vendor DLKM をマップ</string>

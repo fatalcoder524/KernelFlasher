@@ -32,7 +32,6 @@
     <string name="flash_partition_image">Flash Partitione Image</string>
     <string name="flash_ksu_lkm">Flash KernelSU LKM Driver</string>
     <string name="restore">Ripristina</string>
-    <string name="check_kernel_version">Controlla versione kernel</string>
     <string name="mount_vendor_dlkm">Monta Vendor DLKM</string>
     <string name="unmount_vendor_dlkm">Smonta Vendor DLKM</string>
     <string name="map_vendor_dlkm">Mappa Vendor DLKM</string>

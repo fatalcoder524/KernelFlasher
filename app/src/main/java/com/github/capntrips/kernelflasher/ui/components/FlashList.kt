@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,24 +63,34 @@ fun ColumnScope.FlashList(
         listState.animateScrollToItem(output.size)
     }
     DataCard (cardTitle)
-    Spacer(Modifier.height(4.dp))
-    LazyColumn(
-        Modifier
+    Spacer(Modifier.height(12.dp))
+    Surface(
+        modifier = Modifier
             .weight(1.0f)
-            .fillMaxSize()
-            .scrollbar(listState),
-        listState
+            .fillMaxSize(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
     ) {
-        items(output) { message ->
-            Text(message,
-                style = LocalTextStyle.current.copy(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = TextUnit(12.0f, TextUnitType.Sp),
-                    lineHeight = TextUnit(18.0f, TextUnitType.Sp)
+        LazyColumn(
+            Modifier
+                .fillMaxSize()
+                .scrollbar(listState)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            listState
+        ) {
+            items(output) { message ->
+                Text(message,
+                    style = LocalTextStyle.current.copy(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = TextUnit(12.0f, TextUnitType.Sp),
+                        lineHeight = TextUnit(18.0f, TextUnitType.Sp)
+                    )
                 )
-            )
+            }
         }
     }
+    Spacer(Modifier.height(8.dp))
     content()
 }
 

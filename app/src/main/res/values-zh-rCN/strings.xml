@@ -32,7 +32,6 @@
     <string name="flash_partition_image">刷入分区镜像</string>
     <string name="flash_ksu_lkm">刷入 KernelSU LKM Driver</string>
     <string name="restore">恢复</string>
-    <string name="check_kernel_version">检查内核版本</string>
     <string name="mount_vendor_dlkm">挂载 Vendor DLKM</string>
     <string name="unmount_vendor_dlkm">卸载 Vendor DLKM</string>
     <string name="map_vendor_dlkm">映射 Vendor DLKM</string>

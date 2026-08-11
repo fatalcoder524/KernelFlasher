@@ -6,10 +6,11 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.automirrored.outlined.DriveFileMove
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
@@ -25,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.capntrips.kernelflasher.R
 import com.github.capntrips.kernelflasher.common.PartitionUtil
+import com.github.capntrips.kernelflasher.ui.components.ActionTile
+import com.github.capntrips.kernelflasher.ui.components.TileColors
 import com.github.capntrips.kernelflasher.ui.components.DataCard
 import com.github.capntrips.kernelflasher.ui.components.DataRow
 import com.github.capntrips.kernelflasher.ui.components.DataSet
@@ -81,14 +84,12 @@ fun ColumnScope.BackupsContent(
         AnimatedVisibility(!viewModel.isRefreshing) {
             Column {
                 Spacer(Modifier.height(5.dp))
-                OutlinedButton(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(4.dp),
+                ActionTile(
+                    text = stringResource(R.string.delete),
+                    icon = Icons.Outlined.Delete,
+                    accent = TileColors.Rose,
                     onClick = { viewModel.delete(context) { navController.popBackStack() } }
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
+                )
             }
         }
     } else {
@@ -96,14 +97,12 @@ fun ColumnScope.BackupsContent(
         AnimatedVisibility(viewModel.needsMigration) {
             Column {
                 Spacer(Modifier.height(5.dp))
-                OutlinedButton(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(4.dp),
+                ActionTile(
+                    text = stringResource(R.string.migrate),
+                    icon = Icons.AutoMirrored.Outlined.DriveFileMove,
+                    accent = TileColors.Cyan,
                     onClick = { viewModel.migrate(context) }
-                ) {
-                    Text(stringResource(R.string.migrate))
-                }
+                )
             }
         }
         if (viewModel.backups.isNotEmpty()) {

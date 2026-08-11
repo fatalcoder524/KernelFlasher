@@ -4,12 +4,14 @@ import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.RestartAlt
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -19,9 +21,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.capntrips.kernelflasher.R
+import com.github.capntrips.kernelflasher.ui.components.ActionTile
 import com.github.capntrips.kernelflasher.ui.components.DataCard
 import com.github.capntrips.kernelflasher.ui.components.DataRow
 import com.github.capntrips.kernelflasher.ui.components.SlotCard
+import com.github.capntrips.kernelflasher.ui.components.TileColors
 import kotlinx.serialization.ExperimentalSerializationApi
 
 @ExperimentalMaterial3Api
@@ -62,59 +66,41 @@ fun ColumnScope.MainContent(
     }
     Spacer(Modifier.height(16.dp))
     AnimatedVisibility(!viewModel.isRefreshing) {
-        OutlinedButton(
-            modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(4.dp),
+        ActionTile(
+            text = stringResource(R.string.backups),
+            icon = Icons.Outlined.Archive,
+            accent = TileColors.Blue,
+            showChevron = true,
             onClick = { navController.navigate("backups") }
-        ) {
-            Text(stringResource(R.string.backups))
-        }
-    }
-    AnimatedVisibility(!viewModel.isRefreshing) {
-        OutlinedButton(
-            modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(4.dp),
-            onClick = { navController.navigate("updates") }
-        ) {
-            Text(stringResource(R.string.updates))
-        }
+        )
     }
     if (viewModel.hasRamoops) {
-        OutlinedButton(
-            modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(4.dp),
+        ActionTile(
+            text = stringResource(R.string.save_ramoops),
+            icon = Icons.Outlined.BugReport,
+            accent = TileColors.Cyan,
             onClick = { viewModel.saveRamoops(context) }
-        ) {
-            Text(stringResource(R.string.save_ramoops))
-        }
+        )
     }
-    OutlinedButton(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(4.dp),
+    ActionTile(
+        text = stringResource(R.string.save_dmesg),
+        icon = Icons.Outlined.Terminal,
+        accent = TileColors.Amber,
         onClick = { viewModel.saveDmesg(context) }
-    ) {
-        Text(stringResource(R.string.save_dmesg))
-    }
-    OutlinedButton(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(4.dp),
+    )
+    ActionTile(
+        text = stringResource(R.string.save_logcat),
+        icon = Icons.Outlined.Description,
+        accent = TileColors.Violet,
         onClick = { viewModel.saveLogcat(context) }
-    ) {
-        Text(stringResource(R.string.save_logcat))
-    }
+    )
     AnimatedVisibility(!viewModel.isRefreshing) {
-        OutlinedButton(
-            modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(4.dp),
+        ActionTile(
+            text = stringResource(R.string.reboot),
+            icon = Icons.Outlined.RestartAlt,
+            accent = TileColors.Rose,
+            showChevron = true,
             onClick = { navController.navigate("reboot") }
-        ) {
-            Text(stringResource(R.string.reboot))
-        }
+        )
     }
 }
